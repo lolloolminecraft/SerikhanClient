@@ -31,7 +31,7 @@ jobs:
       - name: Restore Lost Camera Media source
         shell: bash
         run: |
-          base64 -d .build/lcm_v110.part > /tmp/lcm.tar.gz
+          cat .build/lcm_v110_00.part .build/lcm_v110_01.part .build/lcm_v110_02.part .build/lcm_v110_03.part .build/lcm_v110_04.part .build/lcm_v110_05.part | base64 -d > /tmp/lcm.tar.gz
           echo '03f4d06a2517154bdd00da8d4f37547032464aa671bcb1128bc772796a829a07  /tmp/lcm.tar.gz' | sha256sum -c -
           tar -xzf /tmp/lcm.tar.gz
 
