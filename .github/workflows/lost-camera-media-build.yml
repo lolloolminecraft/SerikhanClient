@@ -36,18 +36,18 @@ jobs:
           rm -rf LostCameraMedia
           tar -xzf /tmp/lcm.tar.gz
 
-      - name: Apply final death-audio fix
+      - name: Apply final compatibility fixes
         shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
-          p = Path('LostCameraMedia/src/main/java/com/erzhan/lostcamera/client/CameraAudioController.java')
-          s = p.read_text()
-          old = 'if (!ClientConfig.HEARTBEAT.get()) {'
-          new = 'if (!ClientConfig.HEARTBEAT.get() || LostCameraState.deathSequenceActive()) {'
-          if old not in s:
-              raise SystemExit('heartbeat patch target not found')
-          p.write_text(s.replace(old, new, 1))
+          audio = Path('LostCameraMedia/src/main/java/com/erzhan/lostcamera/client/CameraAudioController.java')
+          s = audio.read_text()
+          s = s.replace('if (!ClientConfig.HEARTBEAT.get()) {', 'if (!ClientConfig.HEARTBEAT.get() || LostCameraState.deathSequenceActive()) {', 1)
+          audio.write_text(s)
+          body = Path('LostCameraMedia/src/main/java/com/erzhan/lostcamera/client/FirstPersonBodyRenderer.java')
+          s = body.read_text().replace('net.minecraft.client.multiplayer.AbstractClientPlayer', 'net.minecraft.client.player.AbstractClientPlayer')
+          body.write_text(s)
           PY
 
       - name: Build Forge mod
