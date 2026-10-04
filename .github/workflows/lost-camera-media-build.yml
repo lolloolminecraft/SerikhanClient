@@ -36,6 +36,20 @@ jobs:
           rm -rf LostCameraMedia
           tar -xzf /tmp/lcm.tar.gz
 
+      - name: Apply final death-audio fix
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('LostCameraMedia/src/main/java/com/erzhan/lostcamera/client/CameraAudioController.java')
+          s = p.read_text()
+          old = 'if (!ClientConfig.HEARTBEAT.get()) {'
+          new = 'if (!ClientConfig.HEARTBEAT.get() || LostCameraState.deathSequenceActive()) {'
+          if old not in s:
+              raise SystemExit('heartbeat patch target not found')
+          p.write_text(s.replace(old, new, 1))
+          PY
+
       - name: Build Forge mod
         working-directory: LostCameraMedia
         run: gradle build --stacktrace --no-daemon
@@ -47,7 +61,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: Lost-Camera-Media-Forge-1.20.1-v1.1.0
+          name: Lost-Camera-Media-Forge-1.20.1-v1.1.0-final
           if-no-files-found: error
           path: |
             LostCameraMedia/build/libs/*.jar
