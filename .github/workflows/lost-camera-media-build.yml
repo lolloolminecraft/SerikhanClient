@@ -31,8 +31,8 @@ jobs:
       - name: Restore Lost Camera Media source
         shell: bash
         run: |
-          cat .build/lcm.part1 .build/lcm.part2 .build/lcm.part3 | base64 -d > /tmp/lcm.tar.gz
-          echo '52cc69f2601c034ce188c87b665eec252955ed2c0c08135fdb998d5e3f30a61e  /tmp/lcm.tar.gz' | sha256sum -c -
+          base64 -d .build/lcm_v110.part > /tmp/lcm.tar.gz
+          echo '03f4d06a2517154bdd00da8d4f37547032464aa671bcb1128bc772796a829a07  /tmp/lcm.tar.gz' | sha256sum -c -
           tar -xzf /tmp/lcm.tar.gz
 
       - name: Build Forge mod
@@ -41,13 +41,13 @@ jobs:
 
       - name: Package source
         shell: bash
-        run: zip -qr LostCameraMedia-source.zip LostCameraMedia -x 'LostCameraMedia/build/*' 'LostCameraMedia/.gradle/*'
+        run: zip -qr Lost-Camera-Media-1.20.1-Source-1.1.0.zip LostCameraMedia -x 'LostCameraMedia/build/*' 'LostCameraMedia/.gradle/*'
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: Lost-Camera-Media-Forge-1.20.1
+          name: Lost-Camera-Media-Forge-1.20.1-v1.1.0
           if-no-files-found: error
           path: |
             LostCameraMedia/build/libs/*.jar
-            LostCameraMedia-source.zip
+            Lost-Camera-Media-1.20.1-Source-1.1.0.zip
