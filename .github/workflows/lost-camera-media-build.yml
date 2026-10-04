@@ -31,8 +31,9 @@ jobs:
       - name: Restore Lost Camera Media source
         shell: bash
         run: |
-          cat .build/lcm_v110_00.part .build/lcm_v110_01.part .build/lcm_v110_02.part .build/lcm_v110_03.part .build/lcm_v110_04.part .build/lcm_v110_05.part | base64 -d > /tmp/lcm.tar.gz
-          echo '03f4d06a2517154bdd00da8d4f37547032464aa671bcb1128bc772796a829a07  /tmp/lcm.tar.gz' | sha256sum -c -
+          cat .build/lcm_v11.part1 .build/lcm_v11.part2 .build/lcm_v11.part3 .build/lcm_v11.part4 | base64 -d > /tmp/lcm.tar.gz
+          echo '8528845693fcf492e90e8c3859d90f2e3fbad22aa9d0bbc444d6cb2fbcc7a933  /tmp/lcm.tar.gz' | sha256sum -c -
+          rm -rf LostCameraMedia
           tar -xzf /tmp/lcm.tar.gz
 
       - name: Build Forge mod
