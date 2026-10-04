@@ -45,8 +45,13 @@ jobs:
           s = audio.read_text()
           s = s.replace('if (!ClientConfig.HEARTBEAT.get()) {', 'if (!ClientConfig.HEARTBEAT.get() || LostCameraState.deathSequenceActive()) {', 1)
           audio.write_text(s)
+
           body = Path('LostCameraMedia/src/main/java/com/erzhan/lostcamera/client/FirstPersonBodyRenderer.java')
-          s = body.read_text().replace('net.minecraft.client.multiplayer.AbstractClientPlayer', 'net.minecraft.client.player.AbstractClientPlayer')
+          s = body.read_text()
+          s = s.replace('import net.minecraft.client.multiplayer.AbstractClientPlayer;\n', '')
+          s = s.replace('import net.minecraft.client.player.AbstractClientPlayer;\n', '')
+          s = s.replace('''        if (!(minecraft.player instanceof AbstractClientPlayer player)\n                || !minecraft.options.getCameraType().isFirstPerson()\n                || player.isSpectator()\n                || player.isSleeping()\n                || !player.isAlive()) {\n            return;\n        }\n''', '''        var player = minecraft.player;\n        if (player == null\n                || !minecraft.options.getCameraType().isFirstPerson()\n                || player.isSpectator()\n                || player.isSleeping()\n                || !player.isAlive()) {\n            return;\n        }\n''')
+          s = s.replace('''        Minecraft minecraft = Minecraft.getInstance();\n        if (minecraft.player instanceof AbstractClientPlayer player) {\n            if (minecraft.getEntityRenderDispatcher().getRenderer(player) instanceof net.minecraft.client.renderer.entity.player.PlayerRenderer renderer) {\n                PlayerModel<?> model = renderer.getModel();\n                model.head.visible = snapshot.head;\n                model.hat.visible = snapshot.hat;\n                model.leftArm.visible = snapshot.leftArm;\n                model.rightArm.visible = snapshot.rightArm;\n                model.leftSleeve.visible = snapshot.leftSleeve;\n                model.rightSleeve.visible = snapshot.rightSleeve;\n            }\n        }\n''', '''        Minecraft minecraft = Minecraft.getInstance();\n        var player = minecraft.player;\n        if (player != null && minecraft.getEntityRenderDispatcher().getRenderer(player) instanceof net.minecraft.client.renderer.entity.player.PlayerRenderer renderer) {\n            PlayerModel<?> model = renderer.getModel();\n            model.head.visible = snapshot.head;\n            model.hat.visible = snapshot.hat;\n            model.leftArm.visible = snapshot.leftArm;\n            model.rightArm.visible = snapshot.rightArm;\n            model.leftSleeve.visible = snapshot.leftSleeve;\n            model.rightSleeve.visible = snapshot.rightSleeve;\n        }\n''')
           body.write_text(s)
           PY
 
