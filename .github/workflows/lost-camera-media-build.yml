@@ -42,6 +42,7 @@ jobs:
           cat .build/lcm_v12_patch.part1 .build/lcm_v12_patch.part2 | base64 -d > /tmp/lcm-v12-patch.tar.gz
           echo '693b14abf7e248da958d296f91e8d09a00e35fd35b60d19d78b9aaf00b95a635  /tmp/lcm-v12-patch.tar.gz' | sha256sum -c -
           tar -xzf /tmp/lcm-v12-patch.tar.gz -C LostCameraMedia
+          sed -i 's/20.0f - reviveTicks + event.getPartialTick()/20.0f - reviveTicks + (float) event.getPartialTick()/' LostCameraMedia/src/main/java/com/erzhan/lostcamera/client/CameraMotionController.java
 
       - name: Generate original horror camera audio
         shell: bash
