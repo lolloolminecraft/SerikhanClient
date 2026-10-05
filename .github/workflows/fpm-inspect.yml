@@ -1,0 +1,34 @@
+name: Fetch First Person Model 1.20.1
+
+on:
+  push:
+    branches:
+      - lost-camera-media-build
+    paths:
+      - '.github/workflows/fpm-inspect.yml'
+  workflow_dispatch:
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch upstream First-person Model
+        shell: bash
+        run: |
+          curl -L --fail --retry 3 -o firstperson-forge-2.7.3-mc1.20.1.jar https://github.com/tr7zw/FirstPersonModel/releases/download/2.7.3/firstperson-forge-2.7.3-mc1.20.1.jar
+          sha256sum firstperson-forge-2.7.3-mc1.20.1.jar
+          jar tf firstperson-forge-2.7.3-mc1.20.1.jar > firstperson-contents.txt
+          unzip -p firstperson-forge-2.7.3-mc1.20.1.jar META-INF/MANIFEST.MF > firstperson-manifest.txt || true
+          unzip -p firstperson-forge-2.7.3-mc1.20.1.jar META-INF/mods.toml > firstperson-mods.toml || true
+          find . -maxdepth 1 -type f -print
+      - uses: actions/upload-artifact@v4
+        with:
+          name: firstperson-model-1.20.1-inspect
+          path: |
+            firstperson-forge-2.7.3-mc1.20.1.jar
+            firstperson-contents.txt
+            firstperson-manifest.txt
+            firstperson-mods.toml
