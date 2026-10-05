@@ -28,7 +28,7 @@ jobs:
         with:
           gradle-version: '8.8'
 
-      - name: Restore Lost Camera Media source
+      - name: Restore v1.1 source
         shell: bash
         run: |
           cat .build/lcm_v11.part1 .build/lcm_v11.part2 .build/lcm_v11.part3 .build/lcm_v11.part4 | base64 -d > /tmp/lcm.tar.gz
@@ -36,38 +36,45 @@ jobs:
           rm -rf LostCameraMedia
           tar -xzf /tmp/lcm.tar.gz
 
-      - name: Apply final compatibility fixes
+      - name: Apply v1.2 source patch
         shell: bash
         run: |
-          python - <<'PY'
-          from pathlib import Path
-          audio = Path('LostCameraMedia/src/main/java/com/erzhan/lostcamera/client/CameraAudioController.java')
-          s = audio.read_text()
-          s = s.replace('if (!ClientConfig.HEARTBEAT.get()) {', 'if (!ClientConfig.HEARTBEAT.get() || LostCameraState.deathSequenceActive()) {', 1)
-          audio.write_text(s)
+          cat .build/lcm_v12_patch.part1 .build/lcm_v12_patch.part2 | base64 -d > /tmp/lcm-v12-patch.tar.gz
+          echo '693b14abf7e248da958d296f91e8d09a00e35fd35b60d19d78b9aaf00b95a635  /tmp/lcm-v12-patch.tar.gz' | sha256sum -c -
+          tar -xzf /tmp/lcm-v12-patch.tar.gz -C LostCameraMedia
 
-          body = Path('LostCameraMedia/src/main/java/com/erzhan/lostcamera/client/FirstPersonBodyRenderer.java')
-          s = body.read_text()
-          s = s.replace('import net.minecraft.client.multiplayer.AbstractClientPlayer;\n', '')
-          s = s.replace('import net.minecraft.client.player.AbstractClientPlayer;\n', '')
-          s = s.replace('''        if (!(minecraft.player instanceof AbstractClientPlayer player)\n                || !minecraft.options.getCameraType().isFirstPerson()\n                || player.isSpectator()\n                || player.isSleeping()\n                || !player.isAlive()) {\n            return;\n        }\n''', '''        var player = minecraft.player;\n        if (player == null\n                || !minecraft.options.getCameraType().isFirstPerson()\n                || player.isSpectator()\n                || player.isSleeping()\n                || !player.isAlive()) {\n            return;\n        }\n''')
-          s = s.replace('''        Minecraft minecraft = Minecraft.getInstance();\n        if (minecraft.player instanceof AbstractClientPlayer player) {\n            if (minecraft.getEntityRenderDispatcher().getRenderer(player) instanceof net.minecraft.client.renderer.entity.player.PlayerRenderer renderer) {\n                PlayerModel<?> model = renderer.getModel();\n                model.head.visible = snapshot.head;\n                model.hat.visible = snapshot.hat;\n                model.leftArm.visible = snapshot.leftArm;\n                model.rightArm.visible = snapshot.rightArm;\n                model.leftSleeve.visible = snapshot.leftSleeve;\n                model.rightSleeve.visible = snapshot.rightSleeve;\n            }\n        }\n''', '''        Minecraft minecraft = Minecraft.getInstance();\n        var player = minecraft.player;\n        if (player != null && minecraft.getEntityRenderDispatcher().getRenderer(player) instanceof net.minecraft.client.renderer.entity.player.PlayerRenderer renderer) {\n            PlayerModel<?> model = renderer.getModel();\n            model.head.visible = snapshot.head;\n            model.hat.visible = snapshot.hat;\n            model.leftArm.visible = snapshot.leftArm;\n            model.rightArm.visible = snapshot.rightArm;\n            model.leftSleeve.visible = snapshot.leftSleeve;\n            model.rightSleeve.visible = snapshot.rightSleeve;\n        }\n''')
-          body.write_text(s)
-          PY
+      - name: Generate original horror camera audio
+        shell: bash
+        run: |
+          if ! command -v ffmpeg >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y ffmpeg
+          fi
+          python LostCameraMedia/tools/generate_audio.py
 
       - name: Build Forge mod
         working-directory: LostCameraMedia
         run: gradle build --stacktrace --no-daemon
 
+      - name: Verify jar
+        shell: bash
+        run: |
+          JAR=$(find LostCameraMedia/build/libs -maxdepth 1 -name '*.jar' | head -1)
+          test -n "$JAR"
+          jar tf "$JAR" | grep -q 'com/erzhan/lostcamera/client/CameraMotionController.class'
+          jar tf "$JAR" | grep -q 'assets/lostcameramedia/sounds/camera_motor.ogg'
+          jar tf "$JAR" | grep -q 'META-INF/THIRD_PARTY_NOTICES.txt'
+          sha256sum "$JAR"
+
       - name: Package source
         shell: bash
-        run: zip -qr Lost-Camera-Media-1.20.1-Source-1.1.0.zip LostCameraMedia -x 'LostCameraMedia/build/*' 'LostCameraMedia/.gradle/*'
+        run: zip -qr Lost-Camera-Media-1.20.1-Source-1.2.0.zip LostCameraMedia -x 'LostCameraMedia/build/*' 'LostCameraMedia/.gradle/*'
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: Lost-Camera-Media-Forge-1.20.1-v1.1.0-final
+          name: Lost-Camera-Media-Forge-1.20.1-v1.2.0-final
           if-no-files-found: error
           path: |
             LostCameraMedia/build/libs/*.jar
-            Lost-Camera-Media-1.20.1-Source-1.1.0.zip
+            Lost-Camera-Media-1.20.1-Source-1.2.0.zip
